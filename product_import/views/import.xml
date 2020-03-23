@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+	<data>
+		<record id="product_import_form" model="ir.ui.view">
+			<field name="name">product_import.form</field>
+			<field name="model">product.import</field>
+			<field name="priority">15</field>
+			<field name="arch" type="xml">
+				<form string="description">
+					<header>
+						<button name="action_process" states="draft,process" string="Process" type="object"/>
+						<button name="update_data" states="process" string="Update products" type="object"/>
+						<button name="update_data" context="{'update_supplierinfo':True}" states="process" string="Update product &amp; supplier" type="object"/>
+
+						<button name="create_data" states="updated" string="Insert new" type="object"/>
+						<button name="action_done" states="updated,created" string="Done" type="object"/>
+						<button name="action_restart" states="updated,created" string="restart" type="object"/>
+						<button name="action_cancel" states="draft,process" string="Cancel" type="object"/>
+						<button name="action_list" states="done" string="view products" type="object"/>
+
+						<field name="state" widget="statusbar"/>
+					</header>
+					<sheet>
+						<h1>
+							<field name="config_id" readonly="True"/>
+						</h1>
+						<group>
+							<field name="file_ids" widget="many2many_binary"/>
+						</group>
+						<group col="2">
+							<field name="created" readonly="True"/>
+							<field name="updated" readonly="True"/>
+							<field name="error" readonly="True"/>
+							<field name="product_ids" views="[[false, 'tree']" widget="x2many_counter" string="Productos"/>
+						</group>
+						<group string="Update">
+							<span>
+								<field field_value="parsed_value" field_x_axis="field_id" field_y_axis="product_id" name="write_values_ids" attr="{'invisible':len('write_values_ids')&gt;100}" widget="x2many_2d_matrix"/>
+							</span>
+						</group>
+						<group string="Create">
+							<span>
+								<field field_value="parsed_value" field_x_axis="field_id" field_y_axis="unic" name="create_values_ids" attr="{'invisible':len('write_values_ids')&gt;100}" widget="x2many_2d_matrix"/>
+							</span>
+						</group>
+					</sheet>
+				</form>
+			</field>
+		</record>
+		<record id="product_import_update_form" model="ir.ui.view">
+			<field name="name">product_import_update.form</field>
+			<field name="model">product.import</field>
+			<field name="priority">20</field>
+
+			<field name="arch" type="xml">
+				<form string="description">
+					<sheet>
+						<group string="Update">
+							<span>
+								<field field_value="parsed_value" field_x_axis="field_id" field_y_axis="product_id" name="write_values_ids"  widget="x2many_2d_matrix"/>
+							</span>
+						</group>
+					</sheet>
+				</form>
+			</field>
+		</record>
+		<record id="product_import_create_form" model="ir.ui.view">
+			<field name="name">product_import_create.form</field>
+			<field name="model">product.import</field>
+			<field name="priority">20</field>
+
+			<field name="arch" type="xml">
+				<form string="description">
+					<sheet>
+						<group string="New">
+							<span>
+								<field field_value="parsed_value" field_x_axis="field_id" field_y_axis="product_id" name="create_values_ids"  widget="x2many_2d_matrix"/>
+							</span>
+						</group>
+					</sheet>
+				</form>
+			</field>
+		</record>
+	</data>
+</openerp>
