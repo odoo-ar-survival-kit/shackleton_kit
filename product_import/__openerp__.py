@@ -21,20 +21,22 @@
 
 
 {
-    'name': 'Product import',
-    'version': '0.1',
-    'category': 'sales',
-    'description': """
+    "name": "Product import",
+    "version": "0.1",
+    "category": "sales",
+    "description": """
 Product import
 ======================
 Add configurable templates for import products from  files    """,
-    'author': 'Filoquin',
-    'website': 'http://sipecu.com.ar',
-    'depends': ['product','web_widget_x2many_2d_matrix'],
-    'installable': True,
-    'data': ['views/import_config.xml',
-            'views/import.xml',
-            'views/product.xml',],
-    'images':[],    
-    'auto_install': False,
+    "author": "Filoquin",
+    "website": "http://sipecu.com.ar",
+    "depends": ["product", "web_widget_x2many_2d_matrix"],
+    "installable": True,
+    "data": [
+        "views/import_config.xml",
+        "views/import.xml",
+        "views/product.xml",
+    ],
+    "images": [],
+    "auto_install": False,
 }
