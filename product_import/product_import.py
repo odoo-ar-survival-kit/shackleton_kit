@@ -19,18 +19,18 @@
 #
 ##############################################################################
 
-from openerp import models, fields, api, _
-import logging
+from odoo import models, fields, api, _
 import base64
 import csv
 import re
 import uuid
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
-from openerp.exceptions import ValidationError
-from openerp.tools.safe_eval import safe_eval
+from odoo.exceptions import ValidationError
+from odoo.tools.safe_eval import safe_eval
 import xlrd
 
+import logging
 _logger = logging.getLogger(__name__)
 
 
@@ -56,9 +56,7 @@ class product_import(models.Model):
         "product.import.config", string="Config", required=True,
     )
 
-    serialized_values_ids = fields.One2many(
-        "product.import.serialized_values", "import_id", string="Serialized",
-    )
+
 
     create_values_ids = fields.One2many(
         "product.import.field_values",
@@ -84,7 +82,7 @@ class product_import(models.Model):
 
     @api.model
     def cast_field_value(self, field, value):
-        try:
+        ##try:
             if field.ttype == "float":
                 return float(value)
             if field.ttype == "integer":
@@ -92,24 +90,18 @@ class product_import(models.Model):
             if field.ttype == "boolean":
                 return bool(value)
             if field.ttype in ["char", "text", "html"]:
-                if type(value) == unicode:
-                    return value.encode("utf-8", "ignore")
                 return str(value)
             if field.ttype == "many2one":
-                if type(value) == unicode:
-                    value = value.encode("utf-8", "ignore")
                 return str(value).rstrip().lstrip()
 
             if field.ttype in ["one2many"]:
-                if type(value) == unicode:
-                    return value.encode("utf-8", "ignore")
                 v = [x.rstrip().lstrip() for x in ",".split(value)]
                 return ",".join(v)
 
-        except:
-            return False
+        #except:
+        #    return False
 
-    @api.multi
+
     def action_list(self):
         self.ensure_one()
         view_id = self.env.ref("product_import.product_import_tree")
@@ -126,7 +118,7 @@ class product_import(models.Model):
         }
         return view
 
-    @api.multi
+
     def action_import(self):
         self.ensure_one()
         view_id = self.env.ref("product_import.product_import_form")
@@ -153,8 +145,6 @@ class product_import(models.Model):
         if field.ttype == "boolean":
             return bool(value)
         if field.ttype in ["char", "text", "html"]:
-            if type(value) == unicode:
-                return value.encode("utf-8", "ignore")
             return str(value)
         if field.ttype == "many2one":
             name = self.env[field.relation].name_search(value)
@@ -177,8 +167,8 @@ class product_import(models.Model):
 
         return value
 
-    @api.one
     def update_data(self):
+        self.ensure_one()
         product_ids = []
         error_lines = []
 
@@ -275,8 +265,8 @@ class product_import(models.Model):
         self.state = "updated"
         self.error = "\n".join(error_lines)
 
-    @api.one
     def create_data(self):
+        self.ensure_one()
         product_vals = {}
         supplier_vals = {}
         error_lines = []
@@ -297,7 +287,7 @@ class product_import(models.Model):
                     row.field_id.name
                 ] = self.prepare_field_value(row.field_id, row.parsed_value)
         for product in product_vals:
-            try:
+            #try:
                 if "categ_id" not in product_vals[product] and len(
                     self.config_id.default_categ_id
                 ):
@@ -331,7 +321,7 @@ class product_import(models.Model):
 
                 product_ids.append(new_product.id)
 
-            except Exception as e:
+                """except Exception as e:
 
                 error_lines.append("%r" % e)
                 for line in product_vals[product]:
@@ -342,7 +332,7 @@ class product_import(models.Model):
                     error_lines.append(
                         "%r : %r" % (line, supplier_vals[product][line])
                     )
-                error_lines.append("-------------------")
+                error_lines.append("-------------------")"""
 
         self.created = True
         self.state = "created"
@@ -350,37 +340,40 @@ class product_import(models.Model):
         self.product_ids = [(4, x) for x in product_ids]
         self.error = self.error + "\n".join(error_lines)
 
-    @api.one
     def action_done(self):
+        self.ensure_one()
         self.state = "done"
 
-    @api.one
     def action_restart(self):
+        self.ensure_one()
         self.error = ""
         self.state = "draft"
 
-    @api.one
     def action_process(self):
+        self.ensure_one()
         self.write_values_ids.unlink()
         self.create_values_ids.unlink()
         self.error = ""
-        # self.serialized_values_ids.unlink()
         if self.config_id.file_format == "csv":
             self.process_csv()
         elif self.config_id.file_format == "xls":
             self.process_xls()
         self.state = "process"
 
-    @api.one
     def process_xls(self):
+        self.ensure_one()
         for file in self.file_ids:
             book = xlrd.open_workbook(
                 file_contents=base64.decodestring(file.datas)
             )
             sheet_names = book.sheet_names()
             sheet_names = [x.lower() for x in sheet_names]
-            for sheet in self.config_id.sheet_ids:
+            _logger.info(sheet_names)
 
+            for sheet in self.config_id.sheet_ids:
+                _logger.info(sheet)
+
+                _logger.info(sheet.name)
                 if sheet.name.lower() in sheet_names or sheet.name.isnumeric():
 
                     index = (
@@ -394,11 +387,11 @@ class product_import(models.Model):
                         if i < self.config_id.start_line:
                             continue
                         r = [cell.value for cell in sheet.row(i)]
-
+                        _logger.info(r)
                         self.process_row(r)
 
-    @api.one
     def process_csv(self):
+        self.ensure_one()
         for file in self.file_ids:
             line = 0
             atach_content = base64.decodestring(file.datas)
@@ -411,14 +404,17 @@ class product_import(models.Model):
                     continue
                 self.process_row(row)
 
-    @api.one
     def process_row(self, row):
+        self.ensure_one()
         res = {}
         leaf = [("active", "=", True)]
+        _logger.info("row"%row)
         if self.config_id.match_supplier:
             leaf.append(("seller_ids.name", "=", self.config_id.partner_id.id))
         rowlen = len(row)
+        _logger.info("rowlen %r"%rowlen)
         for field in self.config_id.field_ids:
+            _logger.info("field.column %rowlen"%field.column)
             if rowlen < field.column:
                 return
             if len(field.preprocessed_id):
@@ -426,9 +422,12 @@ class product_import(models.Model):
                     self.config_id, field.column, row
                 )
             else:
+                _logger.info("field.field_def_id %r"%field.field_def_id)
+
                 v = self.cast_field_value(
                     field.field_def_id.field_id, row[field.column - 1]
                 )
+            _logger.info("v %r"%v)
             if field.required == True and (v == None or v == "" or v == 0):
                 return
 
@@ -448,11 +447,11 @@ class product_import(models.Model):
                     )
                 else:
                     leaf.append((field.field_def_id.field_id.name, "=", v))
-
+        _logger.info(leaf)
         product = self.find_product(leaf)
+        _logger.info(product)
 
         if len(product):
-            # self.add_serialized_line(res,product.id)
             self.add_update_line(product, res)
         else:
             newuuid = uuid.uuid4()
@@ -461,23 +460,10 @@ class product_import(models.Model):
                     default_value.field_id, default_value.field_value
                 )
                 res[default_value.field_id.id] = v
-            # self.add_serialized_line(res,False,newuuid)
             self.add_create_line(newuuid, res)
 
-    @api.one
-    def add_serialized_line(self, res_vals, product_id=False, new_id=False):
-        for field in res_vals:
-            self.env["product.import.serialized_values"].create(
-                {
-                    "import_id": self.id,
-                    "data": res_vals,
-                    "product_id": product_id,
-                    "unic": new_id,
-                }
-            )
-
-    @api.one
     def add_update_line(self, product_id, res_vals):
+        self.ensure_one()
         for field in res_vals:
             self.env["product.import.field_values"].create(
                 {
@@ -489,8 +475,8 @@ class product_import(models.Model):
                 }
             )
 
-    @api.one
     def add_create_line(self, newuuid, res_vals):
+        self.ensure_one()
         for field in res_vals:
             self.env["product.import.field_values"].create(
                 {
@@ -506,20 +492,6 @@ class product_import(models.Model):
     @api.returns("product.product")
     def find_product(self, leaf):
         return self.env["product.product"].search(leaf, limit=1)
-
-
-class product_import_serialized_values(models.Model):
-
-    _name = "product.import.serialized_values"
-    _description = "product import field values"
-
-    import_id = fields.Many2one("product.import", string="Config",)
-
-    product_id = fields.Many2one("product.product", string="product",)
-    unic = fields.Char(string="unic", index=True,)
-    data = fields.Serialized(string="Data",)
-    product_id = fields.Many2one("product.product", string="product",)
-
 
 class product_import_field_values(models.Model):
     _name = "product.import.field_values"
@@ -585,22 +557,32 @@ class product_import_config(models.Model):
 
     active = fields.Boolean(string="Active", default=True)
 
-    @api.multi
     def action_import(self):
-        self.ensure_one()
         view_id = self.env.ref("product_import.product_import_form")
-
-        return {
+        _logger.info({
             "name": _("Import '%s'") % self.name,
-            "view_type": "form",
             "view_mode": "form",
             "res_model": "product.import",
             "view_id": view_id.id,
             "type": "ir.actions.act_window",
             "context": {"default_config_id": self.id},
-            "nodestroy": True,
+            "target": 'current',
+            "domain": [],
+        })
+        return {
+            "name": _("Import '%s'") % self.name,
+            "view_mode": "form",
+            "res_model": "product.import",
+            "view_id": view_id.id,
+            'views': [(view_id.id, 'form')],
+
+            "type": "ir.actions.act_window",
+            "context": {"default_config_id": self.id},
+            "target": 'current',
             "domain": [],
         }
+
+
 
 
 class product_import_config_sheet(models.Model):
@@ -633,7 +615,6 @@ class product_import_preprocessed(models.Model):
     name = fields.Char(string="name",)
     python_code = fields.Text(string="Function", default=_default_code())
 
-    @api.multi
     def _validation_eval_context(self, config_id, column, row):
         self.ensure_one()
 
@@ -649,7 +630,6 @@ class product_import_preprocessed(models.Model):
             "type": type,
         }
 
-    @api.multi
     def validate_value(self, config_id, column, row, do_not_raise=False):
         """Validate the given ID number
         The method raises an openerp.exceptions.ValidationError if the eval of

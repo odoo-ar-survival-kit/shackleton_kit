@@ -1,0 +1,60 @@
+<odoo>
+  <data>
+    <!-- explicit list view definition -->
+<!--
+    <record model="ir.ui.view" id="credit_card_instalment_pos.list">
+      <field name="name">credit_card_instalment_pos list</field>
+      <field name="model">credit_card_instalment_pos.credit_card_instalment_pos</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="name"/>
+          <field name="value"/>
+          <field name="value2"/>
+        </tree>
+      </field>
+    </record>
+-->
+
+    <!-- actions opening views on models -->
+<!--
+    <record model="ir.actions.act_window" id="credit_card_instalment_pos.action_window">
+      <field name="name">credit_card_instalment_pos window</field>
+      <field name="res_model">credit_card_instalment_pos.credit_card_instalment_pos</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+-->
+
+    <!-- server action to the one above -->
+<!--
+    <record model="ir.actions.server" id="credit_card_instalment_pos.action_server">
+      <field name="name">credit_card_instalment_pos server</field>
+      <field name="model_id" ref="model_credit_card_instalment_pos_credit_card_instalment_pos"/>
+      <field name="state">code</field>
+      <field name="code">
+        action = {
+          "type": "ir.actions.act_window",
+          "view_mode": "tree,form",
+          "res_model": model._name,
+        }
+      </field>
+    </record>
+-->
+
+    <!-- Top menu item -->
+<!--
+    <menuitem name="credit_card_instalment_pos" id="credit_card_instalment_pos.menu_root"/>
+-->
+    <!-- menu categories -->
+<!--
+    <menuitem name="Menu 1" id="credit_card_instalment_pos.menu_1" parent="credit_card_instalment_pos.menu_root"/>
+    <menuitem name="Menu 2" id="credit_card_instalment_pos.menu_2" parent="credit_card_instalment_pos.menu_root"/>
+-->
+    <!-- actions -->
+<!--
+    <menuitem name="List" id="credit_card_instalment_pos.menu_1_list" parent="credit_card_instalment_pos.menu_1"
+              action="credit_card_instalment_pos.action_window"/>
+    <menuitem name="Server to list" id="credit_card_instalment_pos" parent="credit_card_instalment_pos.menu_2"
+              action="credit_card_instalment_pos.action_server"/>
+-->
+  </data>
+</odoo>

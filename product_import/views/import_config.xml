@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<openerp>
+<odoo>
 	<data>
 		<record id="product_import_config_tree" model="ir.ui.view">
 			<field name="name">product_import_config.tree</field>
 			<field name="model">product.import.config</field>
 			<field name="arch" type="xml">
-				<tree string="Config">
-					<field name="name" default_order="partner_id"/>
+				<tree string="Config" default_order="partner_id">
+					<field name="name"/>
 					<field name="partner_id"/>
 					<field name="file_format"/>
 				</tree>
@@ -25,7 +25,7 @@
 							<field name="name"/>
 						</h1>
 						<group>
-							<field domain="[('supplier','=',True)]" name="partner_id"/>
+							<field name="partner_id"/>
 							<field name="file_format"/>
 						</group>
 						<group col="2">
@@ -43,7 +43,7 @@
 											<field name="create_uid"/>
 											<field name="file_ids"/>
 											<field name="state"/>
-											<button name="action_import"  string="Open" type="object" />
+											<button name="action_import" string="Open" type="object"/>
 										</tree>
 									</field>
 								</span>
@@ -77,7 +77,6 @@
 									<field name="supplierinfo"/>
 									<field name="match_supplier"/>
 									<field name="default_categ_id"/>
-									
 								</group>
 							</page>
 						</notebook>
@@ -97,12 +96,16 @@
 			</field>
 		</record>
 		<record id="action_product_import_config" model="ir.actions.act_window">
-			<field name="name">Import</field>
+			<field name="name">Import product</field>
 			<field name="res_model">product.import.config</field>
-			<field name="view_type">form</field>
 			<field name="view_mode">tree,form</field>
 		</record>
-		<menuitem action="action_product_import_config" id="product_import_config_menu" parent="purchase.menu_procurement_management_product"/>
+		
+		<record id="sale.sale_menu_root" model="ir.ui.menu">
+			<field name="active">True</field>
+		</record>
+
+		<menuitem action="action_product_import_config" id="product_import_config_menu" parent="sale.sale_menu_root"/>
 		<record id="product_import_preprocessed_form" model="ir.ui.view">
 			<field name="name">product_import_preprocessed.form</field>
 			<field name="model">product.import.preprocessed</field>
@@ -133,4 +136,4 @@
 			</field>
 		</record>
 	</data>
-</openerp>
+</odoo>
