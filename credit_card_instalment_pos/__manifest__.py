@@ -16,8 +16,8 @@
 
     'data': [
         # 'security/ir.model.access.csv',
-        'views/views.xml',
-        'views/templates.xml',
+        'views/pos_payment_method.xml',
+        'views/pos_make_payment.xml',
     ],
     'demo': [
     ],

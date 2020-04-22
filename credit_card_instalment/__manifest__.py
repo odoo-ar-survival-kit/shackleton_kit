@@ -15,6 +15,6 @@
     'depends': ['account'],
     'data': [
         'security/ir.model.access.csv',
-        'views/account_journal.xml',
+
     ],
 }
