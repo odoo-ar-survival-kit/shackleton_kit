@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="product_google_feed_tree" model="ir.ui.view">
+        <field name="name">product_google_feed.tree</field>
+        <field name="model">product.google.feed</field>
+        <field name="arch" type="xml">
+            <tree string="description">
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+    <record id="product_google_feed_form" model="ir.ui.view">
+        <field name="name">product_google_feed.form</field>
+        <field name="model">product.google.feed</field>
+        <field name="arch" type="xml">
+            <form string="description">
+                <header/>
+                <sheet>
+                    <h1>
+                        <field name="name"/>
+                    </h1>
+                    <group>
+                        <field name="website_id"/>
+                        <field name="slug"/>
+                        <field name="domain"/>
+                        <field name="context"/>
+                        <field name="base_url"/>
+                        <field name="producttype_id"/>
+                        <field name="limit"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_product_google_feed" model="ir.actions.act_window">
+        <field name="name">google feed</field>
+        <field name="res_model">product.google.feed</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+    <menuitem action="action_product_google_feed" id="product_google_feed_menu" name="Google feed" parent="website_sale.menu_catalog"/>
+</odoo>
