@@ -5,10 +5,15 @@
         <link href="/website_whatsapp/static/src/css/whatsapp.css" rel="stylesheet" type="text/scss"/>
       </xpath>
     </template>
+    <template id="layout" inherit_id="website.layout" name="Main layout">
+      <xpath expr="//body" position="before">
+        <t t-set="whatstext" t-value="'Hola+estoy+viendo+'+title.replace(' ','+')"/>
+      </xpath>
+    </template>
     <template customize_show="True" id="float_whatsapp" inherit_id="website.layout" name="Show float whatsapp">
       <xpath expr="//footer" position="inside">
         <t t-if="website.whatsapp_active">
-          <a class="whatsme" t-att-href="'https://api.whatsapp.com/send?l=es&amp;phone='+website.whatsapp_active+'&amp;text=Hola'">
+          <a class="whatsme" t-att-href="'https://api.whatsapp.com/send?l=es&amp;phone='+website.whatsapp_active+'&amp;text='+ str(whatstext or 'Hola') ">
             <span class="whatsme-icon">
               <img alt="WhatsApp" src="https://d35pk2t3v0rl2w.cloudfront.net/hbrrdozyj/image/upload/v1/whatsapp-logo_tyn8iu.svg"/>
             </span>
