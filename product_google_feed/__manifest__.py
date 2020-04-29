@@ -20,10 +20,10 @@ Your business information will be used in each program you sign up for. You’ll
 Your business display name can be your business’s name, your website’s name, or your store name. Remember: The name you enter as your business display name will be used as your Merchant Center account name, and users will see this name across Google.    """,
     'author': 'Filoquin',
     'website': 'http://www.sipecu.com.ar',
-    'depends': ['website_sale'],
+    'depends': ['website_sale','stock'],
     'installable': True,
     'data': [
-        'product_google_feed.xml',
+        'views/product_google_feed.xml',
         'data/product_google_producttype.xml',
         'security/ir.model.access.csv',
     ],

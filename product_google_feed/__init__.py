@@ -1,2 +1,2 @@
-from . import product_google_feed
+from . import models
 from . import controllers

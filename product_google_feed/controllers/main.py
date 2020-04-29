@@ -7,11 +7,11 @@ _logger = logging.getLogger(__name__)
 
 class google_feed(http.Controller):
 
-    @http.route( '/google_feed/<string:slug>',auth='public')
+    @http.route('/google_feed/<string:slug>', auth='public')
     def google_feed(self, slug, page=0, **kw):
-        feed_id=request.env['product.google.feed'].sudo().search(
-            [('slug', '=', slug)],limit=1)
+        feed_id = request.env['product.google.feed'].sudo().search(
+            [('slug', '=', slug)], limit=1)
+
         if len(feed_id):
-            _logger.info(feed_id.sudo().make_xml())
-            return feed_id.sudo().make_xml()
+            return request.make_response(feed_id.sudo().make_xml(), headers=[('Content-type', 'text/xml')])
         return  ''
