@@ -17,9 +17,5 @@
     'depends': ['sale_management'],
     'data': [
         'views/views.xml',
-        'views/templates.xml',
-    ],
-    'demo': [
-        'demo/demo.xml',
     ],
 }
