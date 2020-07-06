@@ -103,7 +103,6 @@ class product_google_feed(models.Model):
         string='Google Taxonomy',
     )
 
-
     active = fields.Boolean(
         string='Active',
         default=True,
@@ -123,6 +122,12 @@ class product_google_feed(models.Model):
         domain = safe_eval(self.domain)
         context = safe_eval(self.context)
 
+        if 'pricelist' in context:
+            pricelist_id = self.env['product.pricelist'].browse(context[
+                                                                'pricelist'])
+        else:
+            pricelist_id = self.env.ref('product.list0')
+
         product_ids = self.env['product.template'].sudo().with_context(
             context).search(domain, limit=self.limit)
 
@@ -136,7 +141,8 @@ class product_google_feed(models.Model):
         for product_id in product_ids:
             item = E.item()
             sku = etree.Element('{%s}id' % MY_NAMESPACES['g'])
-            sku.text = product_id['default_code'] if  product_id['default_code'] else 'p-%i'%product_id['default_code'] 
+            sku.text = product_id['default_code'] if product_id[
+                'default_code'] else 'p-%i' % product_id['default_code']
             item.append(sku)
 
             if product_id['barcode']:
@@ -176,41 +182,45 @@ class product_google_feed(models.Model):
                 brand.text = self.website_id.name
             item.append(brand)
 
-
             link = etree.Element('link')
             link.text = "%s/%s%s" % (self.website_id.domain,
                                      self.base_url, slugify(product_id))
             item.append(link)
 
-
             price = etree.Element('{%s}price' % MY_NAMESPACES['g'])
 
-            # to-do: calcular impuestos y currency
-            if 'pack' in  product_id and product_id.pack:
-                price.text = "%.2f %s" % (product_id._price_get(
-                    [product_id])[product_id.id] ,self.env.company.currency_id.name)
-
+            if 'pack' in product_id and product_id.pack:
+                # to-do: calcular impuestos y currency
+                price_value = product_id._price_get(
+                    [product_id])[product_id.id]
             else:
-                #to-do tax ? product_id['list_price']
-                price.text = "%.2f %s" % (product_id['list_price'] ,self.env.company.currency_id.name)
+                price_value = product_id['list_price']
 
+            if product_id.currency_id.id != pricelist_id.currency_id:
+                price_value = pricelist_id.currency_id.compute(
+                    price_value, product_id.currency_id)
+            price_value = product_id.taxes_id.compute_all(price_value)['total_included']
+
+            price.text = "%.2f %s" % (
+                price_value, pricelist_id.currency_id.name)
             item.append(price)
 
             if product_id['image']:
-                image_link = etree.Element('{%s}image_link' % MY_NAMESPACES['g'])
-                image_link.text = '%s/web/image/product.product/%i/image/' % (
+                image_link = etree.Element(
+                    '{%s}image_link' % MY_NAMESPACES['g'])
+                image_link.text = '%sweb/image/product.product/%i/image/' % (
                     self.website_id.domain, product_id.id)
                 item.append(image_link)
-            else :
+            else:
                 pass
-                #add default IMG
+                # add default IMG
 
-            #additional_image_link
+            # additional_image_link
             condition = etree.Element('{%s}condition' % MY_NAMESPACES['g'])
             condition.text = 'new'
             item.append(condition)
 
-            if not product_id['default_code'] or not product_id['barcode']: 
+            if not product_id['default_code'] or not product_id['barcode']:
                 identifier_exists = etree.Element(
                     '{%s}identifier_exists' % MY_NAMESPACES['g'])
                 identifier_exists.text = 'no'
