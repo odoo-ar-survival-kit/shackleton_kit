@@ -194,12 +194,13 @@ class product_google_feed(models.Model):
                 price_value = product_id._price_get(
                     [product_id])[product_id.id]
             else:
-                price_value = product_id['list_price']
+                #esta linea era la original price_value = product_id['list_price']
+                price_value = product_id['website_price']
 
-            if product_id.currency_id.id != pricelist_id.currency_id:
-                price_value = pricelist_id.currency_id.compute(
-                    price_value, product_id.currency_id)
-            price_value = product_id.taxes_id.compute_all(price_value)['total_included']
+            #comento de 200 a 203 y me anda bien # if product_id.currency_id.id != pricelist_id.currency_id:
+                #price_value = pricelist_id.currency_id.compute(
+                    #price_value, product_id.currency_id)
+            #price_value = product_id.taxes_id.compute_all(price_value)['total_included']
 
             price.text = "%.2f %s" % (
                 price_value, pricelist_id.currency_id.name)
