@@ -196,9 +196,9 @@ class product_google_feed(models.Model):
 
             item.append(price)
 
-            if product_id['image_1024']:
+            if product_id['image']:
                 image_link = etree.Element('{%s}image_link' % MY_NAMESPACES['g'])
-                image_link.text = '%s/web/image/product.product/%i/image_1024/' % (
+                image_link.text = '%s/web/image/product.product/%i/image/' % (
                     self.website_id.domain, product_id.id)
                 item.append(image_link)
             else :
