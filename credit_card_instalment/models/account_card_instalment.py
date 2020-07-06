@@ -5,8 +5,6 @@ from odoo.exceptions import ValidationError
 MAX_INSTALMENT = 24
 
 
-
-
 class AccountCardInstalment(models.Model):
     _name = 'account.card.instalment'
     _description = 'amount to add for collection in installments'
@@ -15,7 +13,6 @@ class AccountCardInstalment(models.Model):
         'Fantasy name',
         default='/'
     )
-
     instalment = fields.Integer(
         string='instalment plan',
         min=1,
@@ -48,7 +45,6 @@ class AccountCardInstalment(models.Model):
         'account.journal.instalment.accreditation',
         string='Accreditation method',
     )
-
 
 
 class AccountJournalInstalmentAccreditation(models.Model):
