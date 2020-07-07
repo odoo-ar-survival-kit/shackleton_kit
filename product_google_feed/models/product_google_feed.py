@@ -152,7 +152,8 @@ class product_google_feed(models.Model):
 
             if product_id['default_code']:
                 mpn = etree.Element('{%s}mpn' % MY_NAMESPACES['g'])
-                mpn.text = product_id['default_code']
+                #mpn.text = product_id['default_code']
+                mpn.text = 'cod-%s' product_id['id]
                 item.append(mpn)
 
             title = etree.Element('title')
