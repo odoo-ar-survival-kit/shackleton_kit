@@ -142,7 +142,7 @@ class product_google_feed(models.Model):
             item = E.item()
             sku = etree.Element('{%s}id' % MY_NAMESPACES['g'])
             sku.text = product_id['default_code'] if product_id[
-                'default_code'] else 'p-%i' % product_id['default_code']
+                'default_code'] else 'p-%i' % product_id['id']
             item.append(sku)
 
             if product_id['barcode']:
