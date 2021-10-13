@@ -21,13 +21,15 @@
                     </h1>
                     <group>
                         <field name="website_id"/>
+                        <field name="pricelist_id"/>
+                        <field name="price_total_included"/>
                         <field name="slug"/>
                         <field name="domain"/>
                         <field name="context"/>
                         <field name="base_url"/>
                         <field name="producttype_id"/>
                         <field name="limit"/>
-                        <field name="active"/>
+                        <field name="active" attrs="{'invisible':True}"/>
                     </group>
                 </sheet>
             </form>

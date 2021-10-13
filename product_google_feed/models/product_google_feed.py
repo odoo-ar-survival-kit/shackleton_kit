@@ -1,24 +1,3 @@
-# -*- coding: utf-8 -*-
-##############################################################################
-#
-#    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU Affero General Public License as
-#    published by the Free Software Foundation, either version 3 of the
-#    License, or (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU Affero General Public License for more details.
-#
-#    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-##############################################################################
-
 from odoo import models, fields, api
 from lxml import etree, builder
 from odoo.addons.http_routing.models.ir_http import slugify
@@ -93,16 +72,23 @@ class product_google_feed(models.Model):
         default="[('website_published','=',True)]",
     )
 
+    pricelist_id = fields.Many2one(
+        'product.pricelist',
+        string='Pricelist',
+    )
     context = fields.Text(
         string='context',
-        default="{'pricelist':1}"
+        default="{}"
     )
 
     producttype_id = fields.Many2one(
         'product.google.producttype',
         string='Google Taxonomy',
     )
-
+    price_total_included = fields.Boolean(
+        string='show price included',
+        default=True
+    )
 
     active = fields.Boolean(
         string='Active',
@@ -118,10 +104,116 @@ class product_google_feed(models.Model):
         for feed in self:
             feed.slug = slugify(self)
 
+    def get_feed_info(self, product_id, E):
+        item = E.item()
+
+        sku = etree.Element('{%s}id' % MY_NAMESPACES['g'])
+        sku.text = product_id['default_code'] if product_id[
+            'default_code'] else 'p-%i' % product_id['default_code']
+        item.append(sku)
+
+        if product_id['barcode']:
+            gtin = etree.Element('{%s}gtin' % MY_NAMESPACES['g'])
+            gtin.text = product_id['barcode']
+            item.append(gtin)
+
+        if product_id['default_code']:
+            mpn = etree.Element('{%s}mpn' % MY_NAMESPACES['g'])
+            mpn.text = product_id['default_code']
+            item.append(mpn)
+
+        title = etree.Element('title')
+        title.text = product_id['name']
+        item.append(title)
+
+        description = etree.Element('description')
+        if product_id['description']:
+            description.text = re.sub(
+                CLEANTAG, '', product_id['description'])
+        else:
+            description.text = product_id['name']
+        item.append(description)
+
+        availability = etree.Element(
+            '{%s}availability' % MY_NAMESPACES['g'])
+        if product_id.qty_available > 0:
+            availability.text = 'in stock'
+        else:
+            availability.text = 'preorder'
+        item.append(availability)
+
+        brand = etree.Element('{%s}brand' % MY_NAMESPACES['g'])
+        if 'product_brand_id' in product_id and len(product_id.product_brand_id):
+            brand.text = product_id.product_brand_id.name
+        else:
+            brand.text = self.website_id.name
+        item.append(brand)
+
+        link = etree.Element('link')
+        link.text = "%s/%s%s" % (self.website_id.domain,
+                                 self.base_url, slugify(product_id))
+        item.append(link)
+
+        price = etree.Element('{%s}price' % MY_NAMESPACES['g'])
+
+        if 'pack' in product_id and product_id.pack:
+            if self.price_total_included and len(product_id.taxes_id):
+                amount = product_id.taxes_id.compute_all(
+                    product_id._price_get([product_id])[product_id.id])
+                amount = amount['total_included']
+            else:
+                amount = product_id._price_get([product_id])[product_id.id]
+        else:
+            if self.price_total_included and len(product_id.taxes_id):
+                amount = product_id.taxes_id.compute_all(product_id['price'])
+                amount = amount['total_included']
+            else:
+                amount = product_id['price']
+
+        price.text = "%.2f %s" % (amount, self.env.company.currency_id.name)
+
+        item.append(price)
+
+        if product_id['image_1024']:
+            image_link = etree.Element('{%s}image_link' % MY_NAMESPACES['g'])
+            image_link.text = '%s/web/image/product.product/%i/image_1024/' % (
+                self.website_id.domain, product_id.id)
+            item.append(image_link)
+        else:
+            pass
+            # add default IMG
+
+        # additional_image_link
+        condition = etree.Element('{%s}condition' % MY_NAMESPACES['g'])
+        condition.text = 'new'
+        item.append(condition)
+
+        if not product_id['default_code'] or not product_id['barcode']:
+            identifier_exists = etree.Element(
+                '{%s}identifier_exists' % MY_NAMESPACES['g'])
+            identifier_exists.text = 'no'
+            item.append(identifier_exists)
+
+        google_product_category = etree.Element(
+            '{%s}google_product_category' % MY_NAMESPACES['g'])
+
+        if len(product_id.producttype_id):
+            google_product_category.text = str(
+                product_id.producttype_id.tax_id)
+        elif (len(product_id.categ_id.producttype_id)):
+            google_product_category.text = str(
+                product_id.categ_id.producttype_id.tax_id)
+        else:
+            google_product_category.text = str(self.producttype_id.tax_id)
+        item.append(google_product_category)
+        return item
+
     def make_xml(self):
         self.ensure_one()
         domain = safe_eval(self.domain)
         context = safe_eval(self.context)
+        if len(self.pricelist_id):
+            context['pricelist'] = self.pricelist_id.id
 
         product_ids = self.env['product.template'].sudo().with_context(
             context).search(domain, limit=self.limit)
@@ -134,101 +226,7 @@ class product_google_feed(models.Model):
         rss.append(channel)
 
         for product_id in product_ids:
-            item = E.item()
-            sku = etree.Element('{%s}id' % MY_NAMESPACES['g'])
-            sku.text = product_id['default_code'] if  product_id['default_code'] else 'p-%i'%product_id['default_code'] 
-            item.append(sku)
-
-            if product_id['barcode']:
-                gtin = etree.Element('{%s}gtin' % MY_NAMESPACES['g'])
-                gtin.text = product_id['barcode']
-                item.append(gtin)
-
-            if product_id['default_code']:
-                mpn = etree.Element('{%s}mpn' % MY_NAMESPACES['g'])
-                mpn.text = product_id['default_code']
-                item.append(mpn)
-
-            title = etree.Element('title')
-            title.text = product_id['name']
-            item.append(title)
-
-            description = etree.Element('description')
-            if product_id['description']:
-                description.text = re.sub(
-                    CLEANTAG, '', product_id['description'])
-            else:
-                description.text = product_id['name']
-            item.append(description)
-
-            availability = etree.Element(
-                '{%s}availability' % MY_NAMESPACES['g'])
-            if product_id.qty_available > 0:
-                availability.text = 'in stock'
-            else:
-                availability.text = 'preorder'
-            item.append(availability)
-
-            brand = etree.Element('{%s}brand' % MY_NAMESPACES['g'])
-            if 'product_brand_id' in product_id and len(product_id.product_brand_id):
-                brand.text = product_id.product_brand_id.name
-            else:
-                brand.text = self.website_id.name
-            item.append(brand)
-
-
-            link = etree.Element('link')
-            link.text = "%s/%s%s" % (self.website_id.domain,
-                                     self.base_url, slugify(product_id))
-            item.append(link)
-
-
-            price = etree.Element('{%s}price' % MY_NAMESPACES['g'])
-
-            # to-do: calcular impuestos y currency
-            if 'pack' in  product_id and product_id.pack:
-                price.text = "%.2f %s" % (product_id._price_get(
-                    [product_id])[product_id.id] ,self.env.company.currency_id.name)
-
-            else:
-                #to-do tax ? product_id['list_price']
-                price.text = "%.2f %s" % (product_id['list_price'] ,self.env.company.currency_id.name)
-
-            item.append(price)
-
-            if product_id['image_1024']:
-                image_link = etree.Element('{%s}image_link' % MY_NAMESPACES['g'])
-                image_link.text = '%s/web/image/product.product/%i/image_1024/' % (
-                    self.website_id.domain, product_id.id)
-                item.append(image_link)
-            else :
-                pass
-                #add default IMG
-
-            #additional_image_link
-            condition = etree.Element('{%s}condition' % MY_NAMESPACES['g'])
-            condition.text = 'new'
-            item.append(condition)
-
-            if not product_id['default_code'] or not product_id['barcode']: 
-                identifier_exists = etree.Element(
-                    '{%s}identifier_exists' % MY_NAMESPACES['g'])
-                identifier_exists.text = 'no'
-                item.append(identifier_exists)
-
-            google_product_category = etree.Element(
-                '{%s}google_product_category' % MY_NAMESPACES['g'])
-
-            if len(product_id.producttype_id):
-                google_product_category.text = str(
-                    product_id.producttype_id.tax_id)
-            elif (len(product_id.categ_id.producttype_id)):
-                google_product_category.text = str(
-                    product_id.categ_id.producttype_id.tax_id)
-            else:
-                google_product_category.text = str(self.producttype_id.tax_id)
-            item.append(google_product_category)
-
+            item = self.get_feed_info(product_id, E)
             channel.append(item)
 
         return etree.tostring(rss, xml_declaration=True, encoding="utf-8", pretty_print=True)
